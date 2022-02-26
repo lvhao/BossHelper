@@ -456,17 +456,6 @@
 
             // 对比上次数据，尝试结束工作
             if(this.tryFinishWork(resumes.length)){
-                let {
-                    sayHiCount,
-                    screeningResumeCount,
-                    findingResumeCount
-                } = menuBar.countingBar;
-                let showText = `
-                    已完成全部简历筛选了 🎉
-                    打招呼数量：${sayHiCount}
-                    查看简历数量：${screeningResumeCount}
-                    检索简历数量：${findingResumeCount}`;
-                alert(showText);
                 return [];
             }
 
@@ -585,8 +574,21 @@
             var pluginIsRunning = this.isRunning();
             var pluginIsWorkDone = this.isWorkDone();
             // 插件关闭或者全部完成，跳出循环
-            if (!pluginIsRunning || pluginIsWorkDone) return;
-
+            if (!pluginIsRunning) return;
+            if (pluginIsWorkDone) {
+                let {
+                    sayHiCount,
+                    screeningResumeCount,
+                    findingResumeCount
+                } = menuBar.countingBar;
+                let showText = `
+                    已完成全部简历筛选了 🎉
+                    打招呼数量：${sayHiCount}
+                    查看简历数量：${screeningResumeCount}
+                    检索简历数量：${findingResumeCount}`;
+                alert(showText);
+                return;
+            }
             // 获取当前页可以打招呼的候选人列表
             let canSayHiCandicates = this.findCanSayHiResumes(pageNo, pageSize);
 

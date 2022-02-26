@@ -20,6 +20,7 @@
         constructor() {
             // ON, OFF
             this.workingState = "OFF";
+
             // ON状态下，没有简历可以操作了
             this.workDone = false;
 
@@ -48,12 +49,13 @@
             return this.workDone;
         }
 
-        tryFinishWork(curretnFindResumeCount) {
+        tryFinishWork(curretnfindingResumeCount) {
             let menuState = this.menuBar.countingBar;
             // 跟上次一样，说明没有数据了
-            if (Number(menuState.findResumeCount) == Number(curretnFindResumeCount)) {
+            if (Number(menuState.findingResumeCount) == Number(curretnfindingResumeCount)) {
                 this.workDone = true;
             }
+            return this.workDone;
         }
     }
 
@@ -68,13 +70,13 @@
             // 查看详情数量
             screeningResumeCount: 0,
             // 获取简历数量
-            findResumeCount: 0
+            findingResumeCount: 0
         };
 
         constructor(settings) {
             this.parentDocument = settings.parentDocument || BossHelperBar.DEFAULT_PARENT_DOC;
             this.plugin = settings.plugin;
-            this.countingBar = settings.countingBar || BossHelperBar.DEFAULT_COUNTING_BAR;
+            this.countingBar = settings.countingBar || Object.assign({}, BossHelperBar.DEFAULT_COUNTING_BAR);
             this.render();
             this.registerEvent();
         }
@@ -100,12 +102,12 @@
             let helperView = `
                 <div id="helper-bar" class="nav-item">
                     <div class="label-name records-center">
-                        🤖 SayHi 
+                        <span style="font-size: medium;vertical-align: middle;">🤖 SayHi</span> 
                         <span id="switch-config" class="ui-switch">
                             <input type="hidden" value="true">
                             <span class="ui-switch-inner"></span>
                         </span>
-                        <span id="counting-bar" style="text-align: center;color: #fff;background-color: #fe574a; padding-left: 5px;padding-right: 5px;">? / ? / ?</span>
+                        <span id="counting-bar" style="border-radius: 5px;text-align: center;color: #fff;background-color: #fe574a; padding-left: 5px;padding-right: 5px;font-size: medium;vertical-align: middle;">? / ? / ?</span>
                     </div>
                 </div>`;
             $(this.parentDocument).append(helperView);
@@ -117,12 +119,12 @@
         }
 
         refreshScreeningResumeCount() {
-            this.countingBar.screeningResume += 1;
+            this.countingBar.screeningResumeCount += 1;
             this.refreshCountingBar();
         }
 
         refreshFindingResumeCount(qty) {
-            this.countingBar.findResumeCount = qty;
+            this.countingBar.findingResumeCount = qty;
             this.refreshCountingBar();
         }
 
@@ -130,14 +132,14 @@
             let {
                 sayHiCount,
                 screeningResumeCount,
-                findResumeCount
+                findingResumeCount
             } = this.countingBar;
-            let showText = `${sayHiCount} / ${screeningResumeCount} / ${findResumeCount}`;
+            let showText = `${sayHiCount} / ${screeningResumeCount} / ${findingResumeCount}`;
             $("#counting-bar").text(showText);
         }
 
         reset() {
-            this.countingBar = BossHelperBar.DEFAULT_COUNTING_BAR;
+            this.countingBar = Object.assign({}, BossHelperBar.DEFAULT_COUNTING_BAR);
             this.refreshCountingBar();
         }
     }
@@ -156,7 +158,7 @@
             this.eventQueue.push(eId);
         }
 
-        clear() {
+        reset() {
             this.elapsedTime = 0;
             this.eventQueue.forEach((eId) => {
                 clearTimeout(eId);
@@ -177,7 +179,7 @@
         }
 
         //生成从minNum到maxNum的随机数
-        waitBetweenSecond(minSecond, maxSecond) {
+        waitSecondBetween(minSecond, maxSecond) {
             return parseInt(Math.random() * (maxSecond - minSecond + 1) + minSecond, 10) * 1000;
         }
     }
@@ -186,7 +188,6 @@
      * 简历判定看板
      */
     class ResumeJudgementBoard {
-
         constructor(settings) {
             this.rootDocument = settings.rootDocument;
             this.render();
@@ -232,13 +233,15 @@
 
             // 展示过滤器判定信息
             var self = this;
-            let htmlContent = filterResultData.map(function(frd) {
+            let htmlContent = filterResultData.map(function (frd) {
                 return self.generateFilterHtmlResult(frd);
             }).join("");
             $docDefaultDiv.find("#judgement-board ul").append(htmlContent);
 
             // 应用判定算法
-            let finalScore = filterResultData.map(function(frd){return frd.score;})
+            let finalScore = filterResultData.map(function (frd) {
+                return frd.score;
+            })
                 .reduce(function (prev, curr) {
                     return prev + curr;
                 });
@@ -265,14 +268,13 @@
             this.nonMatchScore = filterConfig.nonMatchScore;
         }
 
-        doFilter(inputValue) {}
+        doFilter(inputValue) { }
     }
 
     /**
      * 企业黑名单过滤器
      */
     class CompanyBlacklistFilter extends ResumeFilter {
-
         constructor(filterConfig) {
             super("companyBlacklist", filterConfig);
         }
@@ -299,7 +301,6 @@
      * 企业白名单过滤器
      */
     class CompanyWhitelistFilter extends ResumeFilter {
-        
         constructor(filterConfig) {
             super("companyWhitelist", filterConfig);
         }
@@ -326,7 +327,6 @@
      * 年龄过滤器
      */
     class AgeLessthenFilter extends ResumeFilter {
-
         constructor(filterConfig) {
             super("ageLessthen", filterConfig);
         }
@@ -348,7 +348,6 @@
      * 大学白名单过滤器
      */
     class UniversityWhitelistFilter extends ResumeFilter {
-        
         constructor(filterConfig) {
             super("universityWhitelist", filterConfig);
         }
@@ -356,7 +355,7 @@
         doFilter(cv) {
             var self = this;
             let matchedData = cv.filter(function (cve) {
-                return $.inArray(cve, self.data) > 0;
+                return $.inArray(cve, self.data) > -1;
             });
             return {
                 "title": "学校:",
@@ -394,7 +393,7 @@
 
     class ResumeFilterChain {
         constructor(filters) {
-            let filterInstances = filters.map(function(f){
+            let filterInstances = filters.map(function (f) {
                 return Reflect.construct(f.filter, [f.filterConfig]);
             });
             this.filterInstances = filterInstances;
@@ -415,7 +414,7 @@
         constructor(filters) {
             super();
             this.timer = new TaskTimer("简历筛选助手");
-            this.rootDocument =  "iframe[name=recommendFrame]";
+            this.rootDocument = "iframe[name=recommendFrame]";
             this.resumeFilterChain = new ResumeFilterChain(filters);
             this.resumeJudgementBoard = new ResumeJudgementBoard({
                 rootDocument: this.rootDocument
@@ -437,7 +436,7 @@
 
         clickSayHiBtn() {
             let $recommendFrame = $(this.rootDocument).contents();
-            $recommendFrame.find("#resume-page button.btn-greet")[0].click();
+            // $recommendFrame.find("#resume-page button.btn-greet")[0].click();
             this.menuBar.refreshSayHiCount();
         }
 
@@ -454,10 +453,25 @@
             // 获取候选人行
             let sliceIdx = (pageNo - 1) * pageSize;
             let resumes = $recommendFrame.find("#recommend-list").find("ul.recommend-card-list").children();
-            menuBar.refreshFindingResumeCount(resumes.length);
 
             // 对比上次数据，尝试结束工作
-            this.tryFinishWork(resumes.length);
+            if(this.tryFinishWork(resumes.length)){
+                let {
+                    sayHiCount,
+                    screeningResumeCount,
+                    findingResumeCount
+                } = menuBar.countingBar;
+                let showText = `
+                    已完成全部简历筛选了 🎉
+                    打招呼数量：${sayHiCount}
+                    查看简历数量：${screeningResumeCount}
+                    检索简历数量：${findingResumeCount}`;
+                alert(showText);
+                return [];
+            }
+
+            // 刷新查到的简历量
+            menuBar.refreshFindingResumeCount(resumes.length);
 
             // 返回可以打招呼的行，不重复打招呼
             return resumes.slice(sliceIdx).filter(function () {
@@ -475,7 +489,7 @@
             let companyList = (function () {
                 return $docDefaultDiv.find(".resume-summary ul.jobs")
                     .not(".project,.education").find("h3 span")
-                    .map(function() {
+                    .map(function () {
                         return $(this).text();
                     }).get();
             }());
@@ -485,7 +499,7 @@
                 ageLessthen: (function () {
                     return $docDefaultDiv.find("#resume-page i.fz-age").next().text().replace('岁', '');
                 }()),
-                universityWhitelist: (function() {
+                universityWhitelist: (function () {
                     let r = [];
                     let schoolTags = $docDefaultDiv.find("#resume-page p.school-tags span").map(function () {
                         return $(this).text();
@@ -495,7 +509,7 @@
                     }).get();
                     return r.concat(schoolTags, schools);
                 }()),
-                matchKeyword: (function() {
+                matchKeyword: (function () {
                     return $docDefaultDiv.find(".resume-item-content").text();
                 }())
             };
@@ -523,7 +537,7 @@
                 timer.delayInvoke(() => {
                     if (!pluginIsRunning) return;
                     $(ele).find("div.card-inner")[0].click();
-                    menuBar.refreshScreeningResumeCount(1);
+                    menuBar.refreshScreeningResumeCount();
                 }, 1000);
 
                 // 获取信息等待评估
@@ -532,13 +546,13 @@
 
                     // 获取候选人信息
                     let resumeData = self.getResumeData();
-                    
+
                     // 过滤规则结果
                     let filterResultData = filterChain.doFilter(resumeData);
 
                     // 看板展示
                     board.show(filterResultData);
-                }, 2500);
+                }, 1600);
 
                 // 延迟点击关闭
                 timer.delayInvoke(() => {
@@ -555,7 +569,7 @@
                     // 关闭候选人信息页
                     let $closeBtn = $recommendFrame.find(".resume-dialog span.resume-custom-close")[0];
                     if ($closeBtn) $closeBtn.click();
-                }, timer.waitBetweenSecond(10, 20));
+                }, timer.waitSecondBetween(8, 20));
             });
         }
 
@@ -565,6 +579,9 @@
          * @param pageSize 
          */
         screeningResumes(pageNo, pageSize) {
+            // 新轮回，时间线回归到0
+            this.timer.reset();
+
             var pluginIsRunning = this.isRunning();
             var pluginIsWorkDone = this.isWorkDone();
             // 插件关闭或者全部完成，跳出循环
@@ -589,63 +606,61 @@
         reday() {
             this.menuBar.reset();
             this.resumeJudgementBoard.close();
+            this.timer.reset();
         }
 
         start() {
             super.start();
-            this.reday();
             this.screeningResumes(1, 15);
         }
 
         stop() {
             super.stop();
-            this.timer.clear();
             this.reday();
         }
     }
 
     // 后端过滤规则配置
-    const backendFilterCfg = [
-        {
-            filter: CompanyWhitelistFilter,
-            filterConfig: {
-                data: ["阿里", "腾讯", "美团", "京东", "乐信", "OPPO", "VIVO", "华为"],
-                matchScore: 100,
-                nonMatchScore: 0
-            }
-        },
-        {
-            filter: CompanyBlacklistFilter,
-            filterConfig: {
-                data: ["文思海辉", "中软", "佰钧成", "软通动力", "博彦", "信必优", "神州数码", "浙大网新", "东软"],
-                matchScore: -50,
-                nonMatchScore: 0
-            }
-        },
-        {
-            filter: AgeLessthenFilter,
-            filterConfig: {
-                data: 30,
-                matchScore: 0,
-                nonMatchScore: -50
-            }
-        },
-        {
-            filter: UniversityWhitelistFilter,
-            filterConfig: {
-                data: ["985院校", "211院校", "QS世界大学排名TOP500"],
-                matchScore: 50,
-                nonMatchScore: 0
-            }
-        },
-        {
-            filter: MatchKeywordFilter,
-            filterConfig: {
-                data: ["高并发", "博客", "读书", "源码", "开源", "github"],
-                matchScore: 10,
-                nonMatchScore: 0
-            }
+    const backendFilterCfg = [{
+        filter: CompanyWhitelistFilter,
+        filterConfig: {
+            data: ["阿里", "腾讯", "美团", "京东", "乐信", "OPPO","VIVO", "华为", "字节","头条","货拉拉", "顺丰"],
+            matchScore: 100,
+            nonMatchScore: 0
         }
+    },
+    {
+        filter: CompanyBlacklistFilter,
+        filterConfig: {
+            data: ["文思海辉", "中软", "佰钧成", "软通动力", "博彦", "信必优", "神州数码", "浙大网新", "东软"],
+            matchScore: -50,
+            nonMatchScore: 0
+        }
+    },
+    {
+        filter: AgeLessthenFilter,
+        filterConfig: {
+            data: 30,
+            matchScore: 0,
+            nonMatchScore: -50
+        }
+    },
+    {
+        filter: UniversityWhitelistFilter,
+        filterConfig: {
+            data: ["985院校", "211院校", "QS世界大学排名TOP500", "双一流院校"],
+            matchScore: 50,
+            nonMatchScore: 0
+        }
+    },
+    {
+        filter: MatchKeywordFilter,
+        filterConfig: {
+            data: ["高并发", "博客", "读书", "源码", "开源", "github"],
+            matchScore: 10,
+            nonMatchScore: 0
+        }
+    }
     ];
 
     /**

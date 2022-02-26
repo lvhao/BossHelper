@@ -580,7 +580,7 @@
                     sayHiCount,
                     screeningResumeCount,
                     findingResumeCount
-                } = menuBar.countingBar;
+                } = this.menuBar.countingBar;
                 let showText = `
                     已完成全部简历筛选了 🎉
                     打招呼数量：${sayHiCount}
